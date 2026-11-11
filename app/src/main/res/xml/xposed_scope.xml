@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  LSPosed 作用域声明（用于 meta-data xposedscope）。
+  "android" = 系统框架 (system_server)，用于 hook NotificationManagerService。
+  按需追加其他目标包名。
+-->
+<resources>
+    <string>android</string>
+</resources>

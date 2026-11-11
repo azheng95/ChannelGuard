@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">ChannelGuard</string>
+    <string name="xposed_description">批量管理各 App 的通知频道，一键关闭指定频道</string>
+    <string name="title_app_list">应用列表</string>
+    <string name="title_channels">通知频道</string>
+    <string name="action_search">搜索</string>
+    <string name="action_refresh">刷新</string>
+    <string name="action_enable_all">全部启用</string>
+    <string name="action_disable_all">全部禁用</string>
+    <string name="action_back">返回</string>
+    <string name="empty_list">暂无应用</string>
+    <string name="empty_channels">该应用暂无通知频道</string>
+    <string name="status_enabled">已启用</string>
+    <string name="status_disabled">已禁用</string>
+    <string name="channel_importance_none">无 (已关闭)</string>
+    <string name="channel_importance_min">最低</string>
+    <string name="channel_importance_low">低</string>
+    <string name="channel_importance_default">默认</string>
+    <string name="channel_importance_high">高</string>
+    <string name="module_not_active">模块未激活，请在 LSPosed 中启用并勾选作用域</string>
+    <string name="module_active">模块已激活</string>
+    <string name="settings">设置</string>
+    <string name="smart_mode">智能模式</string>
+    <string name="smart_mode_desc">基于关键词规则自动识别营销频道</string>
+    <string name="rule_library">规则库</string>
+    <string name="rule_count">规则数量</string>
+    <string name="rule_source">规则来源</string>
+    <string name="rule_source_builtin">内置</string>
+    <string name="rule_source_cloud">云端</string>
+    <string name="last_sync">上次同步</string>
+    <string name="sync_rules">手动同步规则</string>
+    <string name="syncing">同步中...</string>
+    <string name="sync_success">同步成功：%1$d 条规则，版本 %2$d</string>
+    <string name="sync_failed">同步失败：%1$s</string>
+    <string name="usage_hint">使用说明</string>
+</resources>
