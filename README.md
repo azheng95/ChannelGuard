@@ -103,7 +103,7 @@ app/build/outputs/apk/debug/app-debug.apk
 
 默认云端规则地址：
 
-[`NotiSentry-Rules/rules.json`](https://raw.githubusercontent.com/Aruvelut-123/NotiSentry-Rules/main/rules.json)
+[`ChannelGuard/rules.json`](https://raw.githubusercontent.com/azheng95/ChannelGuard/main/rules.json)
 
 本地规则文件保存在应用私有目录的 `files/rules/` 下。首次启动或本地没有成功同步的规则时，模块使用代码内置规则。
 

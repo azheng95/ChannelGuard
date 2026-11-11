@@ -56,9 +56,9 @@ class RuleRepository(
     // ============ 智能规则引擎 ============
 
     companion object {
-        /** 云端默认规则地址：使用 XMSFNotiChannel 的规则库 */
+        /** 云端默认规则地址：ChannelGuard 官方规则文件 */
         const val CLOUD_URL =
-            "https://raw.githubusercontent.com/Aruvelut-123/NotiSentry-Rules/main/rules.json"
+            "https://raw.githubusercontent.com/azheng95/ChannelGuard/main/rules.json"
 
         private const val DIR_NAME = "rules"
         private const val CLOUD_FILE = "cloud.json"

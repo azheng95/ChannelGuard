@@ -1,7 +1,7 @@
 # ChannelGuard 实施计划
 
 > 通知频道批量管理 Xposed 模块。基于 YukiHookAPI，Hook 系统框架 (android)，统一关闭/屏蔽指定 App 的通知频道。
-> 参考项目：[XMSFNotiChannel](https://github.com/GSWXXN/XMSFNotiChannel)
+> 项目名称：ChannelGuard
 
 ## 总体架构
 
