@@ -1,11 +1,28 @@
 package com.xfxo.channelguard.data
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class ChannelMatcherTest {
+    @Test
+    fun manualAllowOverridesSubscriptionMatch() {
+        assertFalse(ChannelMatcher.resolveBlockedState(false) { true })
+    }
+
+    @Test
+    fun manualBlockOverridesNoSubscriptionMatch() {
+        assertTrue(ChannelMatcher.resolveBlockedState(true) { false })
+    }
+
+    @Test
+    fun subscriptionResultAppliesWithoutManualOverride() {
+        assertTrue(ChannelMatcher.resolveBlockedState(null) { true })
+        assertFalse(ChannelMatcher.resolveBlockedState(null) { false })
+    }
+
     private val rule = SubscriptionRule(
         key = "marketing",
         name = "营销频道",

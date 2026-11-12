@@ -31,6 +31,13 @@ class RuleRepository {
     fun isMatchedBySubscription(pkg: String, channelName: String, channelId: String): Boolean =
         isAutomaticEnabled() && matchChannel(pkg, channelName, channelId) != null
 
+    fun shouldBlockChannel(pkg: String, channelName: String, channelId: String): Boolean {
+        val manualOverride = PrefsHelper.readBlockRule(pkg, channelId)
+        return ChannelMatcher.resolveBlockedState(manualOverride) {
+            isMatchedBySubscription(pkg, channelName, channelId)
+        }
+    }
+
     fun isAutomaticEnabled(): Boolean = PrefsHelper.readAutomaticEnabled()
     fun setAutomaticEnabled(enabled: Boolean) = PrefsHelper.writeAutomaticEnabled(enabled)
 

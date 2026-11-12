@@ -30,14 +30,7 @@ object NotificationHook : YukiBaseHooker() {
                         channelClass.getMethod("getName").invoke(channel)?.toString() ?: ""
                     }.getOrNull() ?: ""
 
-                    // 优先级1：手动规则（用户手动设置过的频道）
-                    val manuallyBlocked = rules.isBlocked(pkg, channelId)
-
-                    // 优先级2：智能规则（自动匹配营销频道）
-                    val smartMatched = !manuallyBlocked &&
-                        rules.isMatchedBySubscription(pkg, channelName, channelId)
-
-                    if (manuallyBlocked || smartMatched) {
+                    if (rules.shouldBlockChannel(pkg, channelName, channelId)) {
                         // 将 importance 设为 0（IMPORTANCE_NONE），
                         // 系统会据此关闭频道，后续通知不会再投递到该频道。
                         // 不在 enqueueNotificationInternal 拦截，避免 result=null 引发 NPE 风险。

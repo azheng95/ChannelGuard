@@ -1,6 +1,9 @@
 package com.xfxo.channelguard.data
 
 object ChannelMatcher {
+    fun resolveBlockedState(manualOverride: Boolean?, subscriptionMatched: () -> Boolean): Boolean =
+        manualOverride ?: subscriptionMatched()
+
     fun match(pkg: String, channelName: String, channelId: String, subscriptions: List<Subscription>): SubscriptionMatch? {
         subscriptions.asSequence().filter { it.enabled }.forEach { subscription ->
             subscription.groups.asSequence().filter { it.enabled }.forEach { group ->

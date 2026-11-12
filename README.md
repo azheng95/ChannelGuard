@@ -29,7 +29,7 @@ ChannelGuard 是一个基于 LSPosed 的 Android 通知频道管理模块。它�
 ## 环境要求
 
 - Android 8.0（API 26）或更高版本。
-- LSPosed，支持 Xposed API 82。
+- LSPosed，需支持 libxposed API 101 或更高版本。旧版 Xposed API 82 模块接口不受当前构建支持。
 - 建议使用 MIUI / HyperOS，并在 LSPosed 中将作用域设置为“系统框架（android）”。
 - URL 订阅更新需要网络连接；本地 JSON 订阅和手动频道管理不依赖网络。
 
@@ -57,7 +57,7 @@ ChannelGuard 是一个基于 LSPosed 的 Android 通知频道管理模块。它�
 1. 在首页浏览或搜索应用。搜索支持应用名称和包名。
 2. 点击应用进入“通知频道”页面。
 3. 使用频道右侧开关控制频道状态：
-   - 开：频道保持开启，通知可以正常送达。
+   - 开：清除 ChannelGuard 对该频道的手动拦截规则；不保证恢复已被 Android 或用户关闭的系统频道。
    - 关：频道被手动拦截。
 4. 频道页面会显示已观测频道数量、手动拦截数量和未手动拦截数量。
 
@@ -69,11 +69,13 @@ ChannelGuard 是一个基于 LSPosed 的 Android 通知频道管理模块。它�
 2. 在订阅列表中启停订阅、更新远程订阅或删除订阅。
 3. 在“设置”中启用自动匹配，并可扫描已有通知频道。
 
-新增订阅后，规则会在应用创建通知频道时自动匹配；“立即扫描并应用”用于处理扫描时已经存在的频道。批量扫描结果会显示应用数、频道数和本次关闭的频道数。
+新增订阅后，规则会在应用创建通知频道时自动匹配；“立即扫描并应用”用于处理扫描时已经存在的频道。批量扫描结果显示扫描的应用数、频道数、尝试处理的频道数和失败项数（应用频道读取或频道更新失败）。处理数表示已尝试调用系统更新接口，不代表频道状态已逐个回读验证。
+
+订阅 JSON 的完整结构、规则字段、匹配方式和可直接改写使用的示例，请参阅[订阅规则配置教程](docs/SUBSCRIPTION_GUIDE.md)。
 
 ## 从源码构建
 
-项目使用 Android Gradle Plugin、Kotlin 和 Jetpack Compose。使用仓库自带的 Gradle Wrapper 构建：
+项目使用 Android Gradle Plugin、Kotlin 和 Jetpack Compose。构建需要 JDK 21 或更高版本。使用仓库自带的 Gradle Wrapper 构建：
 
 ```powershell
 .\gradlew.bat :app:assembleDebug
@@ -91,47 +93,16 @@ app/build/outputs/apk/debug/app-debug.apk
 .\gradlew.bat :app:testDebugUnitTest
 ```
 
-在 macOS 或 Linux 上可使用：
+在 macOS 或 Linux 上，仓库提供的 Unix Gradle Wrapper 可使用：
 
 ```bash
-./gradlew :app:assembleDebug
-./gradlew :app:testDebugUnitTest
+sh ./gradlew :app:assembleDebug
+sh ./gradlew :app:testDebugUnitTest
 ```
 
-## 订阅 JSON 格式
+## 订阅规则配置
 
-订阅无需内置默认来源。用户可以添加自有 URL 或本地文件。最小结构如下：
-
-```json
-{
-  "id": "example",
-  "name": "示例订阅",
-  "author": "作者",
-  "version": 1,
-  "updatedAt": "2026-11-11",
-  "groups": [
-    {
-      "key": "marketing",
-      "name": "营销频道",
-      "enabled": true,
-      "rules": [
-        {
-          "key": "shop-promo",
-          "name": "商城促销",
-          "packages": ["com.example.shop"],
-          "channelNames": ["推广", "促销"],
-          "channelIds": ["marketing"],
-          "excludeKeywords": ["订单", "支付"],
-          "matchAll": false,
-          "enabled": true
-        }
-      ]
-    }
-  ]
-}
-```
-
-规则未配置 `channelNames` 和 `channelIds` 时默认不匹配；只有显式设置 `"matchAll": true` 才会匹配其应用范围内的全部频道。
+订阅 JSON 可以从本地文件导入，也可以配置可访问的 URL。规则支持按应用包名和通知频道信息匹配；详细字段说明、应用范围写法、排除规则、全频道匹配和完整示例见[订阅规则配置教程](docs/SUBSCRIPTION_GUIDE.md)。
 
 ## 常见问题
 

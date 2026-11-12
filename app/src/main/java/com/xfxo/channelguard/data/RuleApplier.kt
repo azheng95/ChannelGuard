@@ -44,7 +44,7 @@ object RuleApplier {
         val apps = packageManager.getInstalledApplications(0)
         val progressInterval = maxOf(1, apps.size / 100)
         var totalChannels = 0
-        var appliedChannels = 0
+        var attemptedChannels = 0
         var errorCount = 0
 
         apps.forEachIndexed { index, appInfo ->
@@ -65,18 +65,12 @@ object RuleApplier {
                     val channelId = channel.id
                     val channelName = channel.name?.toString() ?: ""
 
-                    // 优先级1：手动规则
-                    val manuallyBlocked = repository.isBlocked(appInfo.packageName, channelId)
-
-                    // 优先级2：智能规则
-                    val smartMatched = !manuallyBlocked &&
-                        repository.isMatchedBySubscription(appInfo.packageName, channelName, channelId)
-
-                    if (manuallyBlocked || smartMatched) {
-                        // 修改频道 importance（需要 PermissionHook 提供系统权限）
+                    if (repository.shouldBlockChannel(appInfo.packageName, channelName, channelId)) {
                         channel.importance = NotificationManager.IMPORTANCE_NONE
-                        updateChannel(notificationManager, appInfo.packageName, appInfo.uid, channel)
-                        appliedChannels++
+                        attemptedChannels++
+                        if (!updateChannel(notificationManager, appInfo.packageName, appInfo.uid, channel)) {
+                            errorCount++
+                        }
                     }
                 }
             }.onFailure {
@@ -87,7 +81,7 @@ object RuleApplier {
         ApplyResult(
             totalApps = apps.size,
             totalChannels = totalChannels,
-            appliedChannels = appliedChannels,
+            attemptedChannels = attemptedChannels,
             errorCount = errorCount
         )
     }
@@ -118,14 +112,11 @@ object RuleApplier {
                 val channelId = channel.id
                 val channelName = channel.name?.toString() ?: ""
 
-                val manuallyBlocked = repository.isBlocked(pkg, channelId)
-                val smartMatched = !manuallyBlocked &&
-                    repository.isMatchedBySubscription(pkg, channelName, channelId)
-
-                if (manuallyBlocked || smartMatched) {
+                if (repository.shouldBlockChannel(pkg, channelName, channelId)) {
                     channel.importance = NotificationManager.IMPORTANCE_NONE
-                    updateChannel(notificationManager, pkg, appInfo.uid, channel)
-                    appliedCount++
+                    if (updateChannel(notificationManager, pkg, appInfo.uid, channel)) {
+                        appliedCount++
+                    }
                 }
             }
         }
@@ -136,7 +127,7 @@ object RuleApplier {
     data class ApplyResult(
         val totalApps: Int,
         val totalChannels: Int,
-        val appliedChannels: Int,
+        val attemptedChannels: Int,
         val errorCount: Int
     )
 
@@ -161,20 +152,20 @@ object RuleApplier {
             )
         }
 
-    @Suppress("UNCHECKED_CAST")
-    private fun getChannels(manager: NotificationManager, pkg: String, uid: Int): List<NotificationChannel> =
-        runCatching {
-            accessors(manager).reader?.invoke(manager, pkg, uid) as? List<NotificationChannel> ?: emptyList()
-        }.getOrDefault(emptyList())
+    private fun getChannels(manager: NotificationManager, pkg: String, uid: Int): List<NotificationChannel> {
+        val reader = accessors(manager).reader ?: error("getNotificationChannelsForPackage unavailable")
+        val result = reader.invoke(manager, pkg, uid) as? List<*>
+            ?: error("getNotificationChannelsForPackage returned an unexpected value")
+        return result.filterIsInstance<NotificationChannel>()
+    }
 
     private fun updateChannel(
         manager: NotificationManager,
         pkg: String,
         uid: Int,
         channel: NotificationChannel
-    ) {
-        runCatching {
-            accessors(manager).updater?.invoke(manager, pkg, uid, channel)
-        }
-    }
+    ): Boolean = runCatching {
+        val updater = accessors(manager).updater ?: error("updateNotificationChannelForPackage unavailable")
+        updater.invoke(manager, pkg, uid, channel)
+    }.isSuccess
 }

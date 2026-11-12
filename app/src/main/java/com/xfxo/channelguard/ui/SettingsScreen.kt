@@ -103,7 +103,7 @@ fun SettingsScreen(navController: NavController) {
                                 }
                                 progress = null
                                 applying = false
-                                result = "扫描 ${applied.totalApps} 个应用、${applied.totalChannels} 个频道，处理 ${applied.appliedChannels} 个，失败 ${applied.errorCount} 个"
+                                result = "扫描 ${applied.totalApps} 个应用、${applied.totalChannels} 个频道；尝试处理 ${applied.attemptedChannels} 个频道，失败 ${applied.errorCount} 项"
                             }
                         },
                         enabled = !applying,
