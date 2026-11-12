@@ -70,7 +70,7 @@ object RuleApplier {
 
                     // 优先级2：智能规则
                     val smartMatched = !manuallyBlocked &&
-                        repository.isMatchedBySmartRule(channelName, channelId)
+                        repository.isMatchedBySubscription(appInfo.packageName, channelName, channelId)
 
                     if (manuallyBlocked || smartMatched) {
                         // 修改频道 importance（需要 PermissionHook 提供系统权限）
@@ -120,7 +120,7 @@ object RuleApplier {
 
                 val manuallyBlocked = repository.isBlocked(pkg, channelId)
                 val smartMatched = !manuallyBlocked &&
-                    repository.isMatchedBySmartRule(channelName, channelId)
+                    repository.isMatchedBySubscription(pkg, channelName, channelId)
 
                 if (manuallyBlocked || smartMatched) {
                     channel.importance = NotificationManager.IMPORTANCE_NONE

@@ -7,7 +7,7 @@
 
 ```
 app/src/main/java/com/xfxo/channelguard/
-├── HookEntry.kt              # Xposed 入口（@InjectYukiHookWithXposed）
+├── HookEntry.kt              # libxposed API 101 入口（@YukiHookLibXposedEntry）
 ├── hook/
 │   ├── NotificationHook.kt   # Hook NotificationManagerService：频道创建 + 通知投递
 │   └── ChannelCollector.kt   # 收集已观测到的频道，回写 prefs 供 UI 展示
@@ -49,8 +49,8 @@ data class ChannelInfo(
 
 ## 跨进程数据交换
 
-使用 YukiHookAPI 的 `YukiHookAPI.Configs`（底层 XSharedPreferences）：
-- 规则文件：`/data/misc/.../ChannelGuard_prefs.xml`，MODE_WORLD_READABLE（旧设备）/ 新设备通过 `prefs("ChannelGuard")` API
+使用 YukiHook 的 `preferences("ChannelGuard")` 共享设置：
+- 规则通过 libxposed remote preferences 在模块 UI 与 system_server 之间读写
 - UI 进程写规则 → system_server 进程读规则
 - system_server 写已观测频道 → UI 进程读展示
 
@@ -63,7 +63,7 @@ data class ChannelInfo(
 - `app/src/main/java/com/xfxo/channelguard/data/ChannelStore.kt`
 
 **要求**：
-- `PrefsHelper`：封装 YukiHookAPI 的 `prefs("ChannelGuard")` 读写，提供 `readBlockRules()`、`writeBlockRule(pkg, channelId, blocked)`、`readObservedChannels(pkg)`、`writeObservedChannel(info)` 方法。注意 UI 进程和 Hook 进程都要能用。
+- `PrefsHelper`：封装 YukiHook 的 `preferences("ChannelGuard")` 读写，提供 `readBlockRules()`、`writeBlockRule(pkg, channelId, blocked)`、`readObservedChannels(pkg)`、`writeObservedChannel(info)` 方法。UI 与 system_server 共用同一存储。
 - `RuleRepository`：在 `PrefsHelper` 之上提供领域语义 API：`isBlocked(pkg, channelId)`、`setBlocked(pkg, channelId, blocked)`、`getAllRules()`。内存缓存 + 写穿。
 - `ChannelStore`：维护 `Map<String, List<ChannelInfo>>`，提供 `observe(pkg)` 返回 Flow，`update(pkg, channels)` 合并去重。
 
@@ -79,7 +79,7 @@ data class ChannelInfo(
 - `app/src/main/java/com/xfxo/channelguard/hook/ChannelCollector.kt`
 
 **要求**：
-- `HookEntry`：`@InjectYukiHookWithXposed` 注解，实现 `IYukiHookXposedInit`，`onHook()` 内 `YukiHookAPI.encase { loadSystem { loadHooker(NotificationHook, ChannelCollector) } }`
+- `HookEntry`：`@YukiHookLibXposedEntry` 注解，实现 `YukiHookXposedModule`，声明 `system` 作用域并在 `onHook()` 内调用 `encase { loadSystem { loadHooker(NotificationHook, ChannelCollector) } }`
 - `NotificationHook : YukiBaseHooker()`：
   - Hook `createNotificationChannels`（参数 `NotificationChannel[]`）：遍历数组，对每个 channel 若 `RuleRepository.isBlocked(pkg, channelId)` 则反射设 importance = 0
   - Hook `enqueueNotificationInternal`：before 块内取 notification 的 channelId，若被屏蔽则 `result = null`（阻断投递）
@@ -89,7 +89,7 @@ data class ChannelInfo(
 **验收标准**：
 - 编译通过
 - LSPosed 中模块可见且作用域勾选 `android` 后能激活
-- 日志（`YukiHookAPI.log` 或 Log.e TAG="ChannelGuard"）能在 logcat 看到 Hook 装载成功
+- 日志（YukiHook 日志或 Log.e TAG="ChannelGuard"）能在 logcat 看到 Hook 装载成功
 
 ### 第 3 步：UI 层
 **文件**：
@@ -100,7 +100,7 @@ data class ChannelInfo(
 
 **要求**：
 - `MainActivity`：Compose `setContent`，`NavHost` 两个路由：`appList`、`channelDetail/{pkg}`
-- 启动时检查 YukiHookAPI 模块激活状态，未激活显示提示卡片
+- 启动时检查 YukiHook 模块激活状态，未激活显示提示卡片
 - `AppListScreen`：`PackageManager.getInstalledApplications` 列出所有 App，显示图标 + 名称，点击跳转详情。顶部搜索框 + 系统应用过滤开关
 - `ChannelDetailScreen`：根据 pkg 从 `ChannelStore` 读已观测频道（无则提示"启动目标 App 触发通知后可看到频道"），每行显示频道名 + ID + importance，右侧 Switch 切换屏蔽，写入 `RuleRepository`
 - `theme/Theme.kt`：Material3 动态取色（Android 12+）或回退紫色主题
@@ -124,13 +124,13 @@ data class ChannelInfo(
 
 - **包名**：`com.xfxo.channelguard`（已固定，勿改）
 - **最低 SDK**：26（通知频道 API 引入版本）
-- **YukiHookAPI**：1.2.0（Maven `https://maven.highcapable.io/`）
+- **YukiHookAPI**：1.5.0，libxposed API 101 runtime
 - **不要引入**额外三方库（Gson、RxJava 等），用 kotlinx 和 AndroidX 即可
 - **不要给 Codex 关沙箱**，保持 `workspace-write`
 - **每步完成后** Claude 审查 `git diff`，再交下一步
 
 ## 备注
 
-- YukiHookAPI 1.x 入口用 `IYukiHookXposedInit` + `@InjectYukiHookWithXposed`，KSP 自动生成 `assets/xposed_init`，**不要手写**该文件
+- YukiHookAPI 1.5.x 使用 libxposed API 101：`YukiHookXposedModule` + `@YukiHookLibXposedEntry`，KSP 自动生成 `META-INF/xposed` 注册文件，**不要手写**这些文件
 - Hook system_server 类时用字符串类名 `"com.android.server.notification.NotificationManagerService".toClass()`，不要直接 import（编译期拿不到该类）
-- 跨进程 SP 在 Android 10+ 受 SELinux 限制，YukiHookAPI 的 `prefs()` 已处理兼容，直接用即可
+- 模块 UI 与 system_server 的设置通过 libxposed remote preferences 共享，不使用 `MODE_WORLD_READABLE`

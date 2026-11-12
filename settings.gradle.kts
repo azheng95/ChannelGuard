@@ -11,10 +11,6 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
-        // XPosed API stubs
-        maven("https://api.xposed.info/") {
-            content { includeGroup("de.robv.android.xposed") }
-        }
     }
 }
 

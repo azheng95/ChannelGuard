@@ -35,7 +35,7 @@ object PermissionHook : YukiBaseHooker() {
     private var installed = false
 
     override fun onHook() {
-        val classLoader = appClassLoader
+        val classLoader = hostClassLoader
         val moduleUid = ModuleUid.resolve()
 
         if (moduleUid <= 0) {
@@ -124,7 +124,7 @@ object PermissionHook : YukiBaseHooker() {
                     runCatching {
                         method.isAccessible = true
                         method.hook {
-                            replaceAny {
+                            intercept {
                                 val callerUid = Binder.getCallingUid()
                                 if (callerUid == moduleUid) {
                                     // 本模块的调用：伪装为系统

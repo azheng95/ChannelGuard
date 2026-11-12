@@ -1,23 +1,24 @@
 package com.xfxo.channelguard
 
-import com.highcapable.yukihookapi.annotation.xposed.InjectYukiHookWithXposed
-import com.highcapable.yukihookapi.hook.xposed.proxy.IYukiHookXposedInit
-import com.highcapable.yukihookapi.YukiHookAPI
+import com.highcapable.yukihookapi.annotation.xposed.YukiHookLibXposedEntry
+import com.highcapable.yukihookapi.hook.factory.encase
+import com.highcapable.yukihookapi.hook.xposed.YukiHookXposedModule
 import com.xfxo.channelguard.hook.ChannelCollector
 import com.xfxo.channelguard.hook.NotificationHook
 import com.xfxo.channelguard.hook.PermissionHook
 
-@InjectYukiHookWithXposed
-object HookEntry : IYukiHookXposedInit {
+@YukiHookLibXposedEntry(
+    minApiVersion = 101,
+    targetApiVersion = 101,
+    scope = ["system"]
+)
+class HookEntry : YukiHookXposedModule {
     override fun onHook() {
-        YukiHookAPI.encase {
+        encase {
             loadSystem {
-                // 初始化 PrefsHelper（system_server 进程中获取 Application Context）
-                onAppLifecycle {
+                registerAppLifecycle {
                     onCreate {
                         com.xfxo.channelguard.data.PrefsHelper.initialize(this)
-                        // 初始化智能规则引擎
-                        com.xfxo.channelguard.data.RuleRepository().initSmartRules(this)
                     }
                 }
                 loadHooker(NotificationHook)

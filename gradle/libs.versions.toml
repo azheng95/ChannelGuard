@@ -11,6 +11,7 @@ composeBom = "2024.02.00"
 material3 = "1.2.0"
 navigationCompose = "2.7.6"
 datastorePreferences = "1.0.0"
+mmkv = "2.4.3"
 
 junit = "4.13.2"
 junitExt = "1.1.5"
@@ -23,6 +24,7 @@ androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecyc
 androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
 androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigationCompose" }
 androidx-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastorePreferences" }
+mmkv = { group = "com.tencent", name = "mmkv", version.ref = "mmkv" }
 
 # Compose BOM
 androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }
@@ -34,11 +36,11 @@ androidx-compose-ui-tooling = { group = "androidx.compose.ui", name = "ui-toolin
 
 # YukiHookAPI
 yukihook-core = { group = "com.highcapable.yukihookapi", name = "yukihook-core", version.ref = "yukihook" }
-yukihook-runtime = { group = "com.highcapable.yukihookapi", name = "yukihook-runtime-xposed82", version.ref = "yukihook" }
+yukihook-runtime = { group = "com.highcapable.yukihookapi", name = "yukihook-runtime-libxposed", version.ref = "yukihook" }
 yukihook-ksp = { group = "com.highcapable.yukihookapi", name = "yukihook-compiler", version.ref = "yukihook" }
 
-# XPosed stubs (compileOnly)
-xposed-api = { group = "de.robv.android.xposed", name = "api", version = "82" }
+# libxposed API stubs (compileOnly)
+libxposed-api = { group = "io.github.libxposed", name = "api", version = "102.0.0" }
 
 # Test
 junit = { group = "junit", name = "junit", version.ref = "junit" }

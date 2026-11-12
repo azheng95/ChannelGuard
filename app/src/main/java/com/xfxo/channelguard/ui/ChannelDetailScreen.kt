@@ -62,7 +62,11 @@ fun ChannelDetailScreen(pkg: String, navController: NavController) {
     val appIcon = remember(pkg, appInfo) {
         appInfo?.let { runCatching { packageManager.getApplicationIcon(it) }.getOrNull() }
     }
-    val blockedCount = channels.count { ruleRepository.isBlocked(pkg, it.channelId) }
+    val blockedCount = channels.count {
+        ruleRepository.isBlocked(pkg, it.channelId) ||
+            (!ruleRepository.hasManualRule(pkg, it.channelId) &&
+                ruleRepository.isMatchedBySubscription(pkg, it.name, it.channelId))
+    }
 
     Scaffold(
         topBar = {
@@ -162,8 +166,15 @@ fun ChannelDetailScreen(pkg: String, navController: NavController) {
 
                 items(channels, key = { it.channelId }) { channel ->
                     var blocked by remember(pkg, channel.channelId) {
-                        mutableStateOf(ruleRepository.isBlocked(pkg, channel.channelId))
+                        mutableStateOf(
+                            ruleRepository.isBlocked(pkg, channel.channelId) ||
+                                (!ruleRepository.hasManualRule(pkg, channel.channelId) &&
+                                    ruleRepository.isMatchedBySubscription(pkg, channel.name, channel.channelId))
+                        )
                     }
+                    val manuallyOverridden = ruleRepository.hasManualRule(pkg, channel.channelId)
+                    val match = if (manuallyOverridden) null
+                    else ruleRepository.matchChannel(pkg, channel.name, channel.channelId)
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -191,7 +202,12 @@ fun ChannelDetailScreen(pkg: String, navController: NavController) {
                                 shape = RoundedCornerShape(6.dp)
                             ) {
                                 Text(
-                                    if (blocked) "已拦截" else importanceLabel(channel.importance),
+                                    when {
+                                        manuallyOverridden && blocked -> "手动拦截"
+                                        manuallyOverridden -> "手动放行"
+                                        match != null && blocked -> "订阅命中 · ${match.subscriptionName}"
+                                        else -> importanceLabel(channel.importance)
+                                    },
                                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                                     style = MaterialTheme.typography.labelSmall,
                                     color = if (blocked) MaterialTheme.colorScheme.onErrorContainer

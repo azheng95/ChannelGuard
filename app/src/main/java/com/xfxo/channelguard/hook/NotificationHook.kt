@@ -34,7 +34,8 @@ object NotificationHook : YukiBaseHooker() {
                     val manuallyBlocked = rules.isBlocked(pkg, channelId)
 
                     // 优先级2：智能规则（自动匹配营销频道）
-                    val smartMatched = !manuallyBlocked && rules.isMatchedBySmartRule(channelName, channelId)
+                    val smartMatched = !manuallyBlocked &&
+                        rules.isMatchedBySubscription(pkg, channelName, channelId)
 
                     if (manuallyBlocked || smartMatched) {
                         // 将 importance 设为 0（IMPORTANCE_NONE），

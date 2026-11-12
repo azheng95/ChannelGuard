@@ -40,8 +40,8 @@ android {
 }
 
 dependencies {
-    // XPosed stubs（编译时依赖，不打进 APK）
-    compileOnly(libs.xposed.api)
+    // libxposed API 101 stubs（编译时依赖，不打进 APK）
+    compileOnly(libs.libxposed.api)
 
     // YukiHookAPI 1.5.0
     implementation(libs.yukihook.core)
@@ -56,9 +56,11 @@ dependencies {
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.datastore.preferences)
+    implementation(libs.mmkv)
 
     // Compose
     implementation(platform(libs.androidx.compose.bom))
+    implementation("androidx.compose.material:material-icons-extended")
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
@@ -67,6 +69,7 @@ dependencies {
 
     // Test
     testImplementation(libs.junit)
+    testImplementation("org.json:json:20240303")
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso)
 }

@@ -2,7 +2,8 @@ package com.xfxo.channelguard.data
 
 import android.app.Application
 import android.content.Context
-import android.content.SharedPreferences
+import com.highcapable.yukihookapi.hook.factory.preferences
+import com.highcapable.yukihookapi.hook.xposed.preference.YukiHookPreferences
 import org.json.JSONArray
 import org.json.JSONObject
 import java.util.concurrent.ConcurrentHashMap
@@ -10,6 +11,8 @@ import java.util.concurrent.ConcurrentHashMap
 object PrefsHelper {
     private const val PREFS_NAME = "ChannelGuard"
     private const val OBSERVED_PREFIX = "observed_channels:"
+    private const val SUBSCRIPTIONS_KEY = "subscriptions:v1"
+    private const val AUTOMATIC_ENABLED_KEY = "automatic_enabled"
 
     @Volatile
     private var applicationContext: Context? = null
@@ -42,7 +45,7 @@ object PrefsHelper {
             val prefs = fallbackPrefs() ?: return null
             if (!prefs.contains(key)) return null
             runCatching { prefs.getBoolean(key, false) }.getOrElse {
-                runCatching { prefs.getString(key, null)?.toBooleanStrictOrNull() }.getOrNull()
+                runCatching { prefs.getString(key).toBooleanStrictOrNull() }.getOrNull()
             }
         }.getOrNull()
     }
@@ -103,15 +106,48 @@ object PrefsHelper {
         }
     }
 
+    fun readSubscriptions(): List<Subscription> {
+        val raw = readString(SUBSCRIPTIONS_KEY) ?: return emptyList()
+        return runCatching {
+            val array = JSONArray(raw)
+            buildList {
+                for (i in 0 until array.length()) {
+                    array.optJSONObject(i)?.let { Subscription.parse(it.toString()) }?.let(::add)
+                }
+            }
+        }.getOrDefault(emptyList())
+    }
+
+    fun writeSubscriptions(subscriptions: List<Subscription>) {
+        val array = JSONArray()
+        subscriptions.forEach { array.put(it.toJson()) }
+        edit { putString(SUBSCRIPTIONS_KEY, array.toString()) }
+    }
+
+    fun readAutomaticEnabled(): Boolean = readBoolean(AUTOMATIC_ENABLED_KEY) == true
+
+    fun writeAutomaticEnabled(enabled: Boolean) {
+        edit { putBoolean(AUTOMATIC_ENABLED_KEY, enabled) }
+    }
+
+    private fun readBoolean(key: String): Boolean? = runCatching {
+        val prefs = fallbackPrefs() ?: return null
+        if (!prefs.contains(key)) return null
+        runCatching { prefs.getBoolean(key, false) }.getOrElse {
+            runCatching { prefs.getString(key).toBooleanStrictOrNull() }.getOrNull()
+        }
+    }.getOrNull()
+
     private fun ruleKey(pkg: String, channelId: String) = "$pkg/$channelId"
 
-    private fun readString(key: String): String? =
-        runCatching { fallbackPrefs()?.getString(key, null) }.getOrNull()
+    private fun readString(key: String): String? = runCatching {
+        fallbackPrefs()?.takeIf { it.contains(key) }?.getString(key)
+    }.getOrNull()
 
     private fun readAll(): Map<String, Any?> =
-        runCatching { fallbackPrefs()?.all?.mapValues { it.value } ?: emptyMap() }.getOrDefault(emptyMap())
+        runCatching { fallbackPrefs()?.all() ?: emptyMap() }.getOrDefault(emptyMap())
 
-    private fun edit(block: SharedPreferences.Editor.() -> Unit): Boolean =
+    private fun edit(block: YukiHookPreferences.Editor.() -> Unit): Boolean =
         runCatching {
             val prefs = fallbackPrefs() ?: return false
             prefs.edit().apply {
@@ -121,8 +157,8 @@ object PrefsHelper {
             true
         }.getOrDefault(false)
 
-    private fun fallbackPrefs(): SharedPreferences? =
-        resolveContext()?.getSharedPreferences(PREFS_NAME, Context.MODE_WORLD_READABLE)
+    private fun fallbackPrefs(): YukiHookPreferences? =
+        resolveContext()?.preferences(PREFS_NAME)
 
     private fun resolveContext(): Context? {
         applicationContext?.let { return it }
